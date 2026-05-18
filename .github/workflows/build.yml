@@ -1,0 +1,71 @@
+name: build-azerothcore-llm
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      BOOST_ROOT: C:\local\boost_1_82_0
+    steps:
+      - name: Enable long paths
+        shell: powershell
+        run: |
+          New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+          git config --global core.longpaths true
+
+      - name: Shorten build path
+        shell: powershell
+        run: |
+          subst B: D:\a
+
+      - name: Checkout AzerothCore
+        uses: actions/checkout@v4
+        with:
+          repository: mod-playerbots/azerothcore-wotlk
+          ref: Playerbot
+          path: B:/b/a
+
+      - name: Checkout mod-playerbots
+        uses: actions/checkout@v4
+        with:
+          repository: mod-playerbots/mod-playerbots
+          path: B:/b/a/modules/mod-playerbots
+
+      - name: Checkout mod-llm-chatter
+        uses: actions/checkout@v4
+        with:
+          repository: Hokken/mod-llm-chatter
+          path: B:/b/a/modules/mod-llm-chatter
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.13
+
+      - name: Install dependencies
+        shell: bash
+        working-directory: B:/b/a
+        env:
+          CONTINUOUS_INTEGRATION: true
+        run: |
+          ./acore.sh install-deps
+
+      - name: Build
+        shell: bash
+        working-directory: B:/b/a
+        run: |
+          export CTOOLS_BUILD=all
+          ./acore.sh compiler build
+
+      - name: Upload server binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: azerothcore-llm-chatter
+          path: B:/b/a/env/dist/
+          retention-days: 30
+
+      - name: Upload Python bridge
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-chatter-bridge
+          path: B:/b/a/modules/mod-llm-chatter/tools/
+          retention-days: 30
