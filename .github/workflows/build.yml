@@ -51,29 +51,17 @@ jobs:
           export CTOOLS_BUILD=all
           ./acore.sh compiler build
 
-      - name: Find build output
+      - name: Package artifacts
         shell: bash
         working-directory: a
         run: |
-          find var/build -name "*.exe" -o -name "*.dll" 2>/dev/null | head -20
-          find env/dist -name "*.exe" -o -name "*.dll" 2>/dev/null | head -20
-          ls -la var/build/bin/RelWithDebInfo/ 2>/dev/null || echo "No RelWithDebInfo"
-          ls -la env/dist/bin/ 2>/dev/null || echo "No env/dist/bin"
-
-      - name: Copy binaries to dist
-        shell: bash
-        working-directory: a
-        run: |
-          mkdir -p dist/bin
-          cp var/build/bin/RelWithDebInfo/*.exe dist/bin/ 2>/dev/null || true
-          cp var/build/bin/RelWithDebInfo/*.dll dist/bin/ 2>/dev/null || true
-          cp env/dist/bin/*.exe dist/bin/ 2>/dev/null || true
-          cp env/dist/bin/*.dll dist/bin/ 2>/dev/null || true
-          cp -r env/dist/etc dist/ 2>/dev/null || true
-          cp -r modules/mod-llm-chatter/tools dist/llm-chatter-bridge 2>/dev/null || true
+          mkdir -p dist/bin dist/etc dist/llm-chatter-bridge
+          cp var/build/obj/bin/Release/*.exe dist/bin/
+          cp -r env/dist/etc/* dist/etc/ 2>/dev/null || true
+          cp -r modules/mod-llm-chatter/tools/* dist/llm-chatter-bridge/
           ls -la dist/bin/
 
-      - name: Upload server binaries
+      - name: Upload server
         uses: actions/upload-artifact@v4
         with:
           name: azerothcore-llm-chatter
